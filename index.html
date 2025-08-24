@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Item Sorter Game</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Lexend', sans-serif;
+            background: linear-gradient(135deg, #f0f9ff, #cbebff);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            color: #333;
+        }
+
+        .game-container {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-width: 1200px;
+            width: 100%;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        /* Containers for different game states */
+        .game-main, .game-summary-screen {
+            display: none; /* Hide by default, shown by JS */
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .game-start-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        
+        .game-summary-screen {
+            display: none; /* Hide by default */
+        }
+        
+        .summary-all-items {
+            margin-top: 2rem;
+            text-align: left;
+        }
+        
+        .summary-all-items h3 {
+            color: #1a73e8;
+            margin-bottom: 1rem;
+        }
+
+        .summary-all-items ul {
+            list-style-type: none;
+            padding: 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        .summary-all-items ul li {
+            background-color: #f1f8e9;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #1a73e8;
+            margin-bottom: 0.5rem;
+            font-size: 2.5rem;
+        }
+
+        .game-description {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            color: #555;
+        }
+        
+        /* New container for stats and item card, centered with space between */
+        #item-and-stats-container {
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 2rem;
+        }
+
+        #game-stats {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+
+        #score-display, #timer-display {
+            font-size: 2rem;
+            font-weight: bold;
+            padding: 0 1rem;
+        }
+
+        #score-display {
+            color: #2e7d32;
+        }
+        #timer-display {
+            color: #e65100;
+        }
+        
+        #current-item-container {
+            /* To ensure item card is always centered */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            border: 2px dashed #a0d4f4;
+            border-radius: 15px;
+            padding: 1rem;
+            background-color: #eaf6ff;
+            min-height: 180px;
+            min-width: 180px;
+        }
+
+        .item-card {
+            background-color: #fff;
+            padding: 1rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: grab;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            width: 120px;
+            height: 120px;
+            user-select: none;
+            touch-action: none;
+        }
+
+        .item-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .item-card span {
+            font-size: 3rem;
+        }
+
+        .item-card p {
+            margin-top: 0.5rem;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #444;
+            margin-bottom: 0;
+        }
+
+        #game-map-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1a73e8;
+            margin-bottom: 1rem;
+        }
+        
+        #shopping-map-container {
+            width: 100%;
+            padding: 2rem;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background-color: #f5f5f5;
+            border-radius: 20px;
+        }
+        
+        .street-row {
+            display: flex;
+            flex-wrap: wrap; 
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .road {
+            height: 40px;
+            background-color: #444;
+            margin: 10px 0;
+            border-radius: 5px;
+            position: relative;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .road::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background-image: linear-gradient(to right, #fff 50%, transparent 50%);
+            background-size: 30px 4px;
+            background-repeat: repeat-x;
+            transform: translateY(-50%);
+        }
+        
+        .shop-container {
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            min-height: 180px;
+            min-width: 140px;
+            border: 2px dashed #ccc;
+            position: relative;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .shop-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .shop-container.dragging-over {
+            border-color: #1a73e8;
+            background-color: rgba(232, 245, 255, 0.7);
+            box-shadow: 0 0 15px rgba(26, 115, 232, 0.3);
+        }
+
+        /* Remove building emoji */
+        .shop-container .building {
+            display: none;
+        }
+        
+        /* New, better sign design */
+        .shop-container .sign {
+            background-color: transparent;
+            color: black;
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            box-shadow: none;
+        }
+
+        .shop-container ul {
+            list-style: none;
+            padding: 0;
+            margin: 0.5rem 0 0;
+            text-align: left;
+            width: 100%;
+        }
+
+        .shop-container ul li {
+            background-color: #f1f8e9;
+            margin-bottom: 5px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        .message-box {
+            margin-top: 2rem;
+            padding: 1rem;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            display: none;
+        }
+
+        .message-success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .message-error {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        .message-win {
+            background-color: #ffe0b2;
+            color: #e65100;
+        }
+        
+        .message-timeout {
+            background-color: #fce4ec;
+            color: #ad1457;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .action-buttons button, #play-btn {
+            padding: 0.75rem 2rem;
+            font-size: 1.2rem;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .action-buttons button.pause {
+            background-color: #ff9800;
+        }
+
+        .action-buttons button.end {
+            background-color: #f44336;
+        }
+
+        .action-buttons button:hover, #play-btn:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
+
+        /* Responsive design */
+        @media (min-width: 769px) {
+            .street-row {
+                flex-wrap: nowrap;
+            }
+        }
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            .shop-container {
+                min-width: 120px;
+                min-height: 160px;
+            }
+            .shop-container .building {
+                font-size: 2.5rem;
+            }
+            .shop-container .sign {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <!-- Start screen -->
+        <div class="game-start-screen" id="start-screen">
+            <h1>Item Sorter Game</h1>
+            <p class="game-description">Drag the item to the correct shop. If you run out of time or drag it to the wrong place, you'll move to the next item.</p>
+            <button id="play-btn">Start Game</button>
+        </div>
+        
+        <!-- Main game view -->
+        <div class="game-main" id="main-game-screen">
+            <h1 style="margin-bottom: 1rem;">Item Sorter Game</h1>
+            
+            <!-- New compact container for stats and item -->
+            <div id="item-and-stats-container">
+                <div id="game-stats">
+                    <span id="score-display">Score: 0</span>
+                    <span id="timer-display">25s</span>
+                </div>
+                <div id="current-item-container">
+                    <!-- The current item will be dynamically generated here -->
+                </div>
+            </div>
+            
+            <p id="game-map-title">The Shopping Street</p>
+            <div id="shopping-map-container">
+                <div class="street-row" id="top-street-row">
+                    <!-- Top shops will be dynamically generated here -->
+                </div>
+                
+                <div class="road"></div>
+                
+                <div class="street-row" id="bottom-street-row">
+                    <!-- Bottom shops will be dynamically generated here -->
+                </div>
+            </div>
+
+            <div id="message-box" class="message-box"></div>
+            <div class="action-buttons">
+                <button id="pause-btn" class="pause">Pause</button>
+                <button id="end-btn" class="end">End</button>
+            </div>
+        </div>
+        
+        <!-- Summary screen view -->
+        <div class="game-summary-screen" id="summary-screen">
+            <h1>Game Over!</h1>
+            <p class="game-description" id="final-score-message"></p>
+            <div class="summary-all-items">
+                <h3>All Items in the Game:</h3>
+                <ul id="all-items-list">
+                    <!-- All items will be dynamically generated here -->
+                </ul>
+            </div>
+            <button id="restart-btn" style="margin-top: 2rem;" class="play-again-btn">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // Data for the game: shops and their corresponding items
+        const shops = {
+            'bookshop': { name: 'Bookshop', emoji: '📚', items: [
+                { id: 'item-book', name: 'book', emoji: '📖' },
+                { id: 'item-pen', name: 'pen', emoji: '🖊️' },
+                { id: 'item-notebook', name: 'notebook', emoji: '📓' },
+                { id: 'item-paper', name: 'paper', emoji: '📄' }
+            ]},
+            'bakers': { name: 'Baker\'s', emoji: '🥐', items: [
+                { id: 'item-bread', name: 'bread', emoji: '🍞' },
+                { id: 'item-cake', name: 'cake', emoji: '🎂' },
+                { id: 'item-donut', name: 'donut', emoji: '🍩' }
+            ]},
+            'shoe-shop': { name: 'Shoe Shop', emoji: '👟', items: [
+                { id: 'item-shoes', name: 'shoes', emoji: '👟' },
+                { id: 'item-flipflops', name: 'flip-flops', emoji: '🩴' },
+                { id: 'item-sandals', name: 'sandals', emoji: '👡' }
+            ]},
+            'clothes-shop': { name: 'Clothes Shop', emoji: '👕', items: [
+                { id: 'item-tshirt', name: 't-shirt', emoji: '👕' },
+                { id: 'item-dress', name: 'dress', emoji: '👗' },
+                { id: 'item-hat', name: 'hat', emoji: '👒' },
+                { id: 'item-socks', name: 'socks', emoji: '🧦' }
+            ]},
+            'jewellery-shop': { name: 'Jewellery Shop', emoji: '💎', items: [
+                { id: 'item-ring', name: 'ring', emoji: '💍' },
+                { id: 'item-necklace', name: 'necklace', emoji: '⛓️' },
+                { id: 'item-bracelet', name: 'bracelet', emoji: '📿' }
+            ]},
+            'computer-shop': { name: 'Computer Shop', emoji: '💻', items: [
+                { id: 'item-laptop', name: 'laptop', emoji: '💻' },
+                { id: 'item-mouse', name: 'mouse', emoji: '🖱️' },
+                { id: 'item-keyboard', name: 'keyboard', emoji: '⌨️' }
+            ]},
+            'sports-shop': { name: 'Sports Shop', emoji: '⚽', items: [
+                { id: 'item-ball', name: 'ball', emoji: '⚽' },
+                { id: 'item-racket', name: 'racket', emoji: '🏸' },
+                { id: 'item-jersey', name: 'jersey', emoji: '👕' }
+            ]},
+            'butchers': { name: 'Butcher\'s', emoji: '🍖', items: [
+                { id: 'item-meat', name: 'meat', emoji: '🥩' },
+                { id: 'item-sausage', name: 'sausage', emoji: '🌭' },
+                { id: 'item-chicken', name: 'chicken', emoji: '🍗' },
+                { id: 'item-beef', name: 'beef', emoji: '🐂' }
+            ]},
+            'pet-shop': { name: 'Pet Shop', emoji: '🐾', items: [
+                { id: 'item-cat-food', name: 'cat food', emoji: '🐱' },
+                { id: 'item-dog-cage', name: 'dog cage', emoji: '🐕' },
+                { id: 'item-fish', name: 'fish', emoji: '🐠' }
+            ]},
+            'pharmacy': { name: 'Pharmacy', emoji: '💊', items: [
+                { id: 'item-medicine', name: 'medicine', emoji: '💊' },
+                { id: 'item-bandage', name: 'bandage', emoji: '🩹' }
+            ]}
+        };
+
+        const pastelColors = ['#F0F8FF', '#E6E6FA', '#FFF0F5', '#F5F5DC', '#F0FFF0', '#F5FFFA', '#FAFAD2', '#D8BFD8', '#B0E0E6', '#ADD8E6'];
+
+        // --- Sound Generation using Web Audio API ---
+        const playSound = (frequency, duration, type) => {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.type = type;
+            oscillator.frequency.value = frequency;
+
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.5, audioContext.currentTime + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        };
+
+        const playCorrectSound = () => {
+            playSound(880, 0.1, 'sine');
+        };
+
+        const playIncorrectSound = () => {
+            playSound(220, 0.2, 'sawtooth');
+        };
+
+        // Find elements after the DOM is fully loaded to prevent errors
+        document.addEventListener('DOMContentLoaded', () => {
+            const startScreenEl = document.getElementById('start-screen');
+            const playBtn = document.getElementById('play-btn');
+            const mainGameScreenEl = document.getElementById('main-game-screen');
+            const summaryScreenEl = document.getElementById('summary-screen');
+            const currentItemContainer = document.getElementById('current-item-container');
+            const topStreetRowEl = document.getElementById('top-street-row');
+            const bottomStreetRowEl = document.getElementById('bottom-street-row');
+            const allItemsListEl = document.getElementById('all-items-list');
+            const messageBoxEl = document.getElementById('message-box');
+            const pauseBtn = document.getElementById('pause-btn');
+            const endBtn = document.getElementById('end-btn');
+            const restartBtn = document.getElementById('restart-btn');
+            const timerDisplay = document.getElementById('timer-display');
+            const scoreDisplay = document.getElementById('score-display');
+            const finalScoreMessageEl = document.getElementById('final-score-message');
+            
+            let allItems = [];
+            let currentItemIndex = 0;
+            let correctItemsCount = 0;
+            let timerInterval;
+            let isPaused = false;
+
+            // Function to shuffle an array
+            const shuffleArray = (array) => {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            };
+
+            // Function to get all items and shuffle them
+            const prepareItems = () => {
+                let items = [];
+                for (const shopId in shops) {
+                    items = items.concat(shops[shopId].items.map(item => ({
+                        ...item,
+                        shopId: shopId
+                    })));
+                }
+                allItems = shuffleArray(items);
+            };
+            
+            // Function to create and render shop containers
+            const createShops = () => {
+                topStreetRowEl.innerHTML = '';
+                bottomStreetRowEl.innerHTML = '';
+                const shopIds = Object.keys(shops);
+                
+                shopIds.forEach((shopId, index) => {
+                    const shop = shops[shopId];
+                    const container = document.createElement('div');
+                    container.className = 'shop-container';
+                    container.id = `shop-${shopId}`;
+                    container.dataset.shopId = shopId;
+                    container.style.backgroundColor = pastelColors[index % pastelColors.length];
+
+                    const signEl = document.createElement('div');
+                    signEl.className = 'sign';
+                    signEl.textContent = shop.name;
+
+                    const itemsListEl = document.createElement('ul');
+                    itemsListEl.className = 'items-list';
+
+                    container.appendChild(signEl);
+                    container.appendChild(itemsListEl);
+                    
+                    if (index < 5) {
+                        topStreetRowEl.appendChild(container);
+                    } else {
+                        bottomStreetRowEl.appendChild(container);
+                    }
+                });
+            };
+            
+            const startTimer = () => {
+                let timeLeft = 25;
+                timerDisplay.textContent = `${timeLeft}s`;
+                clearInterval(timerInterval);
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    timerDisplay.textContent = `${timeLeft}s`;
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        showMessage('Out of time! Moving to the next item.', 'timeout');
+                        currentItemIndex++;
+                        setTimeout(displayNextItem, 1500);
+                    }
+                }, 1000);
+            };
+
+            const displayNextItem = () => {
+                if (currentItemIndex >= allItems.length) {
+                    showWinMessage();
+                    return;
+                }
+
+                currentItemContainer.innerHTML = '';
+                const item = allItems[currentItemIndex];
+                const card = document.createElement('div');
+                card.className = 'item-card';
+                card.draggable = true;
+                card.id = item.id;
+                card.dataset.shopId = item.shopId;
+                card.dataset.itemName = item.name;
+                
+                card.innerHTML = `<span>${item.emoji}</span><p>${item.name}</p>`;
+                currentItemContainer.appendChild(card);
+                
+                startTimer();
+            };
+
+            const startGame = () => {
+                startScreenEl.style.display = 'none';
+                mainGameScreenEl.style.display = 'flex';
+                summaryScreenEl.style.display = 'none';
+                messageBoxEl.style.display = 'none';
+                currentItemIndex = 0;
+                correctItemsCount = 0;
+                scoreDisplay.textContent = 'Score: 0';
+                pauseBtn.textContent = 'Pause';
+                isPaused = false;
+                prepareItems();
+                createShops();
+                displayNextItem();
+            };
+
+            const togglePause = () => {
+                if (isPaused) {
+                    isPaused = false;
+                    pauseBtn.textContent = 'Pause';
+                    startTimer();
+                } else {
+                    isPaused = true;
+                    pauseBtn.textContent = 'Resume';
+                    clearInterval(timerInterval);
+                    showMessage('Game Paused!', 'timeout');
+                }
+            };
+
+            const endGame = () => {
+                clearInterval(timerInterval);
+                showWinMessage();
+            };
+
+            const addEventListeners = () => {
+                let draggedItem = null;
+
+                document.addEventListener('dragstart', (e) => {
+                    if (isPaused) {
+                        e.preventDefault();
+                        return;
+                    }
+                    if (e.target.classList.contains('item-card')) {
+                        draggedItem = e.target;
+                        e.dataTransfer.setData('text/plain', e.target.id);
+                        e.target.style.opacity = '0.5';
+                    }
+                });
+
+                document.addEventListener('dragend', (e) => {
+                    if (draggedItem) {
+                        e.target.style.opacity = '1';
+                        draggedItem = null;
+                    }
+                });
+
+                document.addEventListener('dragover', (e) => {
+                    if (isPaused) {
+                        e.preventDefault();
+                        return;
+                    }
+                    e.preventDefault();
+                    const target = e.target.closest('.shop-container');
+                    if (target) {
+                        target.classList.add('dragging-over');
+                    }
+                });
+
+                document.addEventListener('dragleave', (e) => {
+                    const target = e.target.closest('.shop-container');
+                    if (target) {
+                        target.classList.remove('dragging-over');
+                    }
+                });
+
+                document.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    if (isPaused) return;
+
+                    const dropzone = e.target.closest('.shop-container');
+                    const draggedElementId = e.dataTransfer.getData('text/plain');
+                    const draggedElement = document.getElementById(draggedElementId);
+                    
+                    document.querySelectorAll('.shop-container').forEach(el => {
+                        el.classList.remove('dragging-over');
+                    });
+                    
+                    if (dropzone) {
+                        const shopId = dropzone.dataset.shopId;
+                        const itemShopId = draggedElement.dataset.shopId;
+                        const itemName = draggedElement.dataset.itemName;
+
+                        if (shopId === itemShopId) {
+                            playCorrectSound();
+                            const itemsList = dropzone.querySelector('.items-list');
+                            const newItem = document.createElement('li');
+                            newItem.textContent = itemName;
+                            itemsList.appendChild(newItem);
+
+                            draggedElement.remove();
+                            
+                            showMessage('Correct! 🎉', 'success');
+                            correctItemsCount++;
+                            scoreDisplay.textContent = `Score: ${correctItemsCount}`;
+                            currentItemIndex++;
+                            clearInterval(timerInterval);
+                            
+                            setTimeout(displayNextItem, 1000);
+                        } else {
+                            playIncorrectSound();
+                            draggedElement.remove();
+                            showMessage('Incorrect! Moving to the next item.', 'error');
+                            currentItemIndex++;
+                            clearInterval(timerInterval);
+                            setTimeout(displayNextItem, 1000);
+                        }
+                    }
+                });
+            };
+
+            // Function to display feedback messages
+            const showMessage = (message, type) => {
+                messageBoxEl.textContent = message;
+                messageBoxEl.className = 'message-box';
+                if (type === 'success') {
+                    messageBoxEl.classList.add('message-success');
+                } else if (type === 'error') {
+                    messageBoxEl.classList.add('message-error');
+                } else if (type === 'timeout') {
+                    messageBoxEl.classList.add('message-timeout');
+                }
+                messageBoxEl.style.display = 'block';
+                
+                setTimeout(() => {
+                    messageBoxEl.style.display = 'none';
+                }, 1500);
+            };
+
+            // Show summary screen when game ends
+            const showWinMessage = () => {
+                clearInterval(timerInterval);
+                timerDisplay.textContent = '';
+                
+                mainGameScreenEl.style.display = 'none';
+                summaryScreenEl.style.display = 'flex';
+                
+                finalScoreMessageEl.textContent = `Congratulations! You completed the game! Your final score is ${correctItemsCount} out of ${allItems.length}! ✨`;
+                
+                // Create summary list of all items
+                allItemsListEl.innerHTML = '';
+                let allSortedItems = [];
+                for (const shopId in shops) {
+                    allSortedItems = allSortedItems.concat(shops[shopId].items);
+                }
+                allSortedItems.sort((a, b) => a.name.localeCompare(b.name));
+
+                allSortedItems.forEach(item => {
+                    const itemEl = document.createElement('li');
+                    itemEl.textContent = item.name;
+                    allItemsListEl.appendChild(itemEl);
+                });
+            };
+            
+            // Event Listeners for buttons
+            playBtn.addEventListener('click', startGame);
+            pauseBtn.addEventListener('click', togglePause);
+            endBtn.addEventListener('click', endGame);
+            restartBtn.addEventListener('click', startGame);
+
+            // Initial setup
+            addEventListeners();
+        });
+    </script>
+</body>
+</html>
